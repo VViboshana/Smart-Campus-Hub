@@ -36,6 +36,9 @@ public class SecurityConfig {
     private final CustomOAuth2UserService oAuth2UserService;
     private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
 
+    @org.springframework.beans.factory.annotation.Value("${app.cors.allowed-origins}")
+    private String allowedOrigins;
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -81,7 +84,7 @@ public class SecurityConfig {
                 )
                 .userInfoEndpoint(userInfo -> userInfo.userService(oAuth2UserService))
                 .successHandler(oAuth2AuthenticationSuccessHandler)
-                .failureHandler(new SimpleUrlAuthenticationFailureHandler("http://localhost:5173/login?error=oauth2"))
+                .failureHandler(new SimpleUrlAuthenticationFailureHandler(allowedOrigins.split(",")[0] + "/login?error=oauth2"))
             )
             .exceptionHandling(ex -> ex
                 .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
