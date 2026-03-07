@@ -5,6 +5,7 @@ import { useAuth } from './context/AuthContext';
 
 // Layouts
 import Navbar from './components/layout/Navbar';
+import ChatBot from './components/chat/ChatBot';
 
 // Auth Pages
 import Login from './pages/auth/Login';
@@ -51,6 +52,7 @@ function App() {
     <div className="min-h-screen bg-gray-100">
       <ToastContainer position="top-right" autoClose={3000} />
       {user && <Navbar />}
+      {user && <ChatBot />}
       <main className={user ? 'pt-16' : ''}>
         <Routes>
           {/* Public Routes */}

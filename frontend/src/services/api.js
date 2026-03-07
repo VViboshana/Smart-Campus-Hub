@@ -103,4 +103,9 @@ export const adminAPI = {
   updateUserRoles: (userId, roles) => api.put(`/admin/users/${userId}/roles`, roles),
 };
 
+// Chat APIs
+export const chatAPI = {
+  sendMessage: (message) => api.post('/chat', { message }),
+};
+
 export default api;
