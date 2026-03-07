@@ -80,7 +80,7 @@ public class ChatService {
                 for (Resource r : entry.getValue()) {
                     sb.append("• ").append(r.getName());
                     if (r.getLocation() != null) sb.append(" — ").append(r.getLocation());
-                    if (r.getCapacity() != null) sb.append(" (Capacity: ").append(r.getCapacity()).append(")");
+                    if (r.getCapacity() > 0) sb.append(" (Capacity: ").append(r.getCapacity()).append(")");
                     sb.append("\n");
                 }
                 sb.append("\n");
@@ -324,7 +324,7 @@ public class ChatService {
         for (Resource r : resources) {
             sb.append("• **").append(r.getName()).append("**");
             if (r.getLocation() != null) sb.append(" — ").append(r.getLocation());
-            if (r.getCapacity() != null) sb.append(" (Capacity: ").append(r.getCapacity()).append(")");
+            if (r.getCapacity() > 0) sb.append(" (Capacity: ").append(r.getCapacity()).append(")");
             sb.append(" [").append(r.getStatus()).append("]\n");
         }
         sb.append("\nGo to the **Resources** page to view details or book one.");
