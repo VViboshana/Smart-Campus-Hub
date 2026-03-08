@@ -1,15 +1,24 @@
 import { useState, useRef, useEffect } from 'react';
-import { FiMessageSquare, FiX, FiSend, FiChevronDown } from 'react-icons/fi';
+import { useNavigate } from 'react-router-dom';
+import { FiMessageSquare, FiX, FiSend, FiChevronDown, FiExternalLink } from 'react-icons/fi';
 import { chatAPI } from '../../services/api';
 
 const ChatBot = () => {
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
     {
       id: 1,
       type: 'bot',
-      text: '👋 Hi! I\'m the Smart Campus Hub assistant. I can help you with bookings, resources, tickets, and more. What would you like to know?',
-      suggestions: ['What can you do?', 'How do I book a resource?', 'What resources are available?', 'How do I create a ticket?'],
+      text: '👋 Hi! I\'m the Smart Campus Hub assistant. I can help you navigate, book resources, manage tickets, and more!',
+      suggestions: [],
+      actions: [
+        { label: '📋 Browse Resources', type: 'navigate', value: '/resources', icon: '📋' },
+        { label: '📅 My Bookings', type: 'navigate', value: '/bookings', icon: '📅' },
+        { label: '🎫 My Tickets', type: 'navigate', value: '/tickets', icon: '🎫' },
+        { label: '🏠 Dashboard', type: 'navigate', value: '/', icon: '🏠' },
+        { label: '❓ What can you do?', type: 'query', value: 'What can you do?', icon: '❓' },
+      ],
     },
   ]);
   const [input, setInput] = useState('');
@@ -51,6 +60,7 @@ const ChatBot = () => {
         type: 'bot',
         text: data.reply,
         suggestions: data.suggestions || [],
+        actions: data.actions || [],
       };
       setMessages((prev) => [...prev, botMsg]);
     } catch (err) {
@@ -58,7 +68,10 @@ const ChatBot = () => {
         id: Date.now() + 1,
         type: 'bot',
         text: '❌ Sorry, something went wrong. Please try again.',
-        suggestions: ['What can you do?'],
+        suggestions: [],
+        actions: [
+          { label: '❓ What can you do?', type: 'query', value: 'What can you do?', icon: '❓' },
+        ],
       };
       setMessages((prev) => [...prev, errorMsg]);
     } finally {
@@ -71,12 +84,16 @@ const ChatBot = () => {
     sendMessage(input);
   };
 
-  const handleSuggestionClick = (suggestion) => {
-    sendMessage(suggestion);
+  const handleActionClick = (action) => {
+    if (action.type === 'navigate') {
+      navigate(action.value);
+      setIsOpen(false);
+    } else if (action.type === 'query') {
+      sendMessage(action.value);
+    }
   };
 
   const renderMarkdown = (text) => {
-    // Simple markdown rendering for bold text and line breaks
     return text
       .split('\n')
       .map((line, i) => {
@@ -150,13 +167,38 @@ const ChatBot = () => {
                     {msg.type === 'bot' ? renderMarkdown(msg.text) : msg.text}
                   </div>
                 </div>
-                {/* Suggestions */}
+
+                {/* Action Buttons */}
+                {msg.type === 'bot' && msg.actions && msg.actions.length > 0 && (
+                  <div className="flex flex-col gap-1.5 mt-2 ml-1">
+                    {msg.actions.map((action, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => handleActionClick(action)}
+                        disabled={loading}
+                        className={`flex items-center gap-2 px-3 py-2 text-xs font-medium rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-left ${
+                          action.type === 'navigate'
+                            ? 'bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 hover:border-blue-300 hover:shadow-sm'
+                            : 'bg-gray-50 text-gray-700 border border-gray-200 hover:bg-gray-100 hover:border-gray-300'
+                        }`}
+                      >
+                        <span className="text-sm flex-shrink-0">{action.icon}</span>
+                        <span className="flex-1">{action.label.replace(/^[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]\s?/u, '')}</span>
+                        {action.type === 'navigate' && (
+                          <FiExternalLink className="w-3 h-3 flex-shrink-0 opacity-50" />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {/* Legacy text suggestions (kept for backward compat) */}
                 {msg.type === 'bot' && msg.suggestions && msg.suggestions.length > 0 && (
                   <div className="flex flex-wrap gap-1.5 mt-2 ml-1">
                     {msg.suggestions.map((suggestion, idx) => (
                       <button
                         key={idx}
-                        onClick={() => handleSuggestionClick(suggestion)}
+                        onClick={() => sendMessage(suggestion)}
                         disabled={loading}
                         className="px-2.5 py-1 text-xs bg-blue-50 text-blue-700 border border-blue-200 rounded-full hover:bg-blue-100 hover:border-blue-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       >

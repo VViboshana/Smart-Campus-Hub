@@ -1,6 +1,7 @@
 package com.smartcampus.service;
 
 import com.smartcampus.dto.response.ChatResponse;
+import com.smartcampus.dto.response.ChatResponse.ActionButton;
 import com.smartcampus.model.Resource;
 import com.smartcampus.model.ResourceType;
 import com.smartcampus.repository.ResourceRepository;
@@ -16,15 +17,31 @@ public class ChatService {
 
     private final ResourceRepository resourceRepository;
 
+    // Reusable action buttons
+    private static ActionButton nav(String label, String path, String icon) {
+        return ActionButton.builder().label(label).type("navigate").value(path).icon(icon).build();
+    }
+
+    private static ActionButton query(String label, String queryText, String icon) {
+        return ActionButton.builder().label(label).type("query").value(queryText).icon(icon).build();
+    }
+
     public ChatResponse processMessage(String message) {
         String msg = message.toLowerCase().trim();
 
         // Greeting
         if (matchesAny(msg, "hello", "hi", "hey", "good morning", "good afternoon", "good evening", "howdy", "greetings")) {
             return ChatResponse.builder()
-                    .reply("👋 Hello! Welcome to the Smart Campus Hub assistant. I can help you with booking resources, managing tickets, navigating the platform, and more. What would you like to know?")
+                    .reply("👋 Hello! Welcome to the Smart Campus Hub assistant. I can help you navigate, book resources, manage tickets, and more. Use the quick actions below or ask me anything!")
                     .category("greeting")
-                    .suggestions(List.of("How do I book a resource?", "What resources are available?", "How do I create a ticket?", "Tell me about this platform"))
+                    .suggestions(List.of())
+                    .actions(List.of(
+                            nav("📋 Browse Resources", "/resources", "📋"),
+                            nav("📅 My Bookings", "/bookings", "📅"),
+                            nav("🎫 My Tickets", "/tickets", "🎫"),
+                            nav("🏠 Dashboard", "/", "🏠"),
+                            query("❓ What can you do?", "What can you do?", "❓")
+                    ))
                     .build();
         }
 
@@ -34,6 +51,7 @@ public class ChatService {
                     .reply("👋 Goodbye! Feel free to come back anytime you need help. Have a great day!")
                     .category("farewell")
                     .suggestions(List.of())
+                    .actions(List.of())
                     .build();
         }
 
@@ -42,7 +60,12 @@ public class ChatService {
             return ChatResponse.builder()
                     .reply("😊 You're welcome! Is there anything else I can help you with?")
                     .category("thanks")
-                    .suggestions(List.of("How do I book a resource?", "Tell me about tickets", "What can you do?"))
+                    .suggestions(List.of())
+                    .actions(List.of(
+                            nav("📋 Browse Resources", "/resources", "📋"),
+                            nav("🎫 Create Ticket", "/tickets/create", "🎫"),
+                            query("❓ What can you do?", "What can you do?", "❓")
+                    ))
                     .build();
         }
 
@@ -54,9 +77,15 @@ public class ChatService {
                             "• **Submit Support Tickets** — Report issues with campus facilities\n" +
                             "• **Track Notifications** — Stay updated on booking approvals and ticket status\n" +
                             "• **Admin Dashboard** — Manage resources, bookings, and users\n\n" +
-                            "It's your one-stop hub for campus operations!")
+                            "Use the quick actions below to get started!")
                     .category("about")
-                    .suggestions(List.of("How do I book a resource?", "How do I create a ticket?", "What resources are available?"))
+                    .suggestions(List.of())
+                    .actions(List.of(
+                            nav("📋 Browse Resources", "/resources", "📋"),
+                            nav("📅 Book a Resource", "/resources", "📅"),
+                            nav("🎫 Create a Ticket", "/tickets/create", "🎫"),
+                            nav("🏠 Go to Dashboard", "/", "🏠")
+                    ))
                     .build();
         }
 
@@ -67,7 +96,11 @@ public class ChatService {
                 return ChatResponse.builder()
                         .reply("📋 There are currently no resources listed in the system. An admin can add resources from the Resources management page.")
                         .category("resources")
-                        .suggestions(List.of("How do I book a resource?", "Who can add resources?"))
+                        .suggestions(List.of())
+                        .actions(List.of(
+                                nav("➕ Add Resource (Admin)", "/resources/create", "➕"),
+                                query("❓ Help", "What can you do?", "❓")
+                        ))
                         .build();
             }
 
@@ -85,42 +118,61 @@ public class ChatService {
                 }
                 sb.append("\n");
             }
-            sb.append("You can view details and book any of these from the **Resources** page.");
+            sb.append("Click a button below to take action!");
+
+            // Build action buttons for each resource to book
+            List<ActionButton> actions = new ArrayList<>();
+            actions.add(nav("📋 View All Resources", "/resources", "📋"));
+            for (Resource r : resources) {
+                if (r.getId() != null) {
+                    actions.add(nav("📅 Book: " + r.getName(), "/bookings/create/" + r.getId(), "📅"));
+                }
+            }
 
             return ChatResponse.builder()
                     .reply(sb.toString())
                     .category("resources")
-                    .suggestions(List.of("How do I book a resource?", "Show me lecture halls", "Show me labs"))
+                    .suggestions(List.of())
+                    .actions(actions)
                     .build();
         }
 
-        // Booking — how to
+        // Booking — how to / go book
         if (matchesAny(msg, "book", "booking", "reserve", "reservation", "how to book", "make a booking", "schedule")) {
             return ChatResponse.builder()
-                    .reply("📅 **How to Book a Resource:**\n\n" +
-                            "1. Go to the **Resources** page from the navigation bar\n" +
-                            "2. Browse or search for the resource you need\n" +
-                            "3. Click on the resource to view its details\n" +
-                            "4. Click the **Book Now** button\n" +
-                            "5. Select your desired **date**, **start time**, and **end time**\n" +
-                            "6. Add a **purpose** for the booking\n" +
-                            "7. Submit your request\n\n" +
-                            "Your booking will be **pending** until an admin approves it. You'll receive a notification once it's reviewed!")
+                    .reply("📅 **Ready to book a resource?**\n\n" +
+                            "Choose a quick action below, or follow these steps:\n" +
+                            "1. Browse resources\n" +
+                            "2. Pick one and click **Book Now**\n" +
+                            "3. Set your date, time, and purpose\n" +
+                            "4. Submit — an admin will approve it!\n\n" +
+                            "You'll get a notification once reviewed.")
                     .category("booking")
-                    .suggestions(List.of("What resources are available?", "Where can I see my bookings?", "Can I cancel a booking?"))
+                    .suggestions(List.of())
+                    .actions(List.of(
+                            nav("📋 Browse Resources to Book", "/resources", "📋"),
+                            nav("📅 View My Bookings", "/bookings", "📅"),
+                            query("🔍 What resources are available?", "What resources are available?", "🔍")
+                    ))
                     .build();
         }
 
         // My bookings
         if (matchesAny(msg, "my booking", "view booking", "check booking", "booking status", "see my booking", "where are my booking")) {
             return ChatResponse.builder()
-                    .reply("📋 To view your bookings:\n\n" +
-                            "1. Click **Bookings** in the navigation bar\n" +
-                            "2. You'll see all your bookings with their current status\n" +
-                            "3. Status can be: **Pending** (awaiting approval), **Approved**, **Rejected**, or **Cancelled**\n\n" +
-                            "You can also cancel a pending booking from this page if your plans change.")
+                    .reply("📋 Here you can view all your bookings and their statuses:\n\n" +
+                            "• 🟡 **Pending** — Awaiting admin approval\n" +
+                            "• 🟢 **Approved** — Confirmed\n" +
+                            "• 🔴 **Rejected** — Not approved\n" +
+                            "• ⚪ **Cancelled** — You cancelled it\n\n" +
+                            "Click the button below to go directly to your bookings!")
                     .category("booking")
-                    .suggestions(List.of("How do I book a resource?", "Can I cancel a booking?", "Who approves bookings?"))
+                    .suggestions(List.of())
+                    .actions(List.of(
+                            nav("📅 Go to My Bookings", "/bookings", "📅"),
+                            nav("📋 Browse Resources", "/resources", "📋"),
+                            query("❌ How to cancel a booking?", "cancel booking", "❌")
+                    ))
                     .build();
         }
 
@@ -128,48 +180,54 @@ public class ChatService {
         if (matchesAny(msg, "cancel booking", "cancel my booking", "cancel reservation", "cancel a booking")) {
             return ChatResponse.builder()
                     .reply("❌ **To cancel a booking:**\n\n" +
-                            "1. Go to the **Bookings** page\n" +
-                            "2. Find the booking you want to cancel\n" +
-                            "3. Click the **Cancel** button (only available for pending bookings)\n\n" +
-                            "Note: You can only cancel bookings that are still in **Pending** status.")
+                            "1. Go to **My Bookings**\n" +
+                            "2. Find the booking (must be **Pending** status)\n" +
+                            "3. Click **Cancel**\n\n" +
+                            "Note: Only pending bookings can be cancelled.")
                     .category("booking")
-                    .suggestions(List.of("How do I book a resource?", "Where can I see my bookings?"))
+                    .suggestions(List.of())
+                    .actions(List.of(
+                            nav("📅 Go to My Bookings", "/bookings", "📅"),
+                            nav("📋 Browse Resources", "/resources", "📋")
+                    ))
                     .build();
         }
 
         // Tickets — how to create
         if (matchesAny(msg, "ticket", "create ticket", "submit ticket", "report issue", "raise ticket", "support ticket", "maintenance", "issue", "problem", "complaint")) {
             return ChatResponse.builder()
-                    .reply("🎫 **How to Create a Support Ticket:**\n\n" +
-                            "1. Go to the **Tickets** page from the navigation bar\n" +
-                            "2. Click **Create Ticket**\n" +
-                            "3. Fill in:\n" +
-                            "   • **Title** — Brief description of the issue\n" +
-                            "   • **Description** — Detailed explanation\n" +
-                            "   • **Category** — Select the relevant category\n" +
-                            "   • **Priority** — Low, Medium, High, or Critical\n" +
-                            "   • **Images** — Optionally attach photos\n" +
-                            "4. Submit the ticket\n\n" +
-                            "An admin or technician will review and respond to your ticket. You can track its progress and add comments!")
+                    .reply("🎫 **Need to report an issue?**\n\n" +
+                            "Click the button below to create a ticket directly, or follow these steps:\n" +
+                            "1. Go to **Create Ticket**\n" +
+                            "2. Enter title, description, category, and priority\n" +
+                            "3. Optionally attach images\n" +
+                            "4. Submit!\n\n" +
+                            "A technician or admin will review and respond to your ticket.")
                     .category("ticket")
-                    .suggestions(List.of("Where can I see my tickets?", "What are ticket priorities?", "Can I add comments?"))
+                    .suggestions(List.of())
+                    .actions(List.of(
+                            nav("🎫 Create Ticket Now", "/tickets/create", "🎫"),
+                            nav("📋 View My Tickets", "/tickets", "📋"),
+                            query("📊 Check ticket status", "my ticket status", "📊")
+                    ))
                     .build();
         }
 
         // Ticket status / my tickets
         if (matchesAny(msg, "my ticket", "ticket status", "check ticket", "view ticket", "track ticket")) {
             return ChatResponse.builder()
-                    .reply("📋 **To check your tickets:**\n\n" +
-                            "1. Go to the **Tickets** page\n" +
-                            "2. You'll see all your submitted tickets with their status\n" +
-                            "3. Click on any ticket to view full details and comments\n\n" +
-                            "**Ticket Statuses:**\n" +
+                    .reply("📋 **Your Ticket Statuses:**\n\n" +
                             "• 🟡 **Open** — Newly submitted\n" +
                             "• 🔵 **In Progress** — Being worked on\n" +
                             "• 🟢 **Resolved** — Issue fixed\n" +
-                            "• ⚫ **Closed** — Ticket closed")
+                            "• ⚫ **Closed** — Ticket closed\n\n" +
+                            "Click below to view your tickets or create a new one!")
                     .category("ticket")
-                    .suggestions(List.of("How do I create a ticket?", "Can I add comments to a ticket?"))
+                    .suggestions(List.of())
+                    .actions(List.of(
+                            nav("📋 View My Tickets", "/tickets", "📋"),
+                            nav("🎫 Create New Ticket", "/tickets/create", "🎫")
+                    ))
                     .build();
         }
 
@@ -177,12 +235,16 @@ public class ChatService {
         if (matchesAny(msg, "comment", "add comment", "reply to ticket", "respond to ticket")) {
             return ChatResponse.builder()
                     .reply("💬 **Adding Comments to Tickets:**\n\n" +
-                            "1. Go to the **Tickets** page and click on a ticket\n" +
-                            "2. Scroll down to the comments section\n" +
-                            "3. Type your comment and click **Submit**\n\n" +
-                            "Both users and admins/technicians can add comments to communicate about the issue.")
+                            "1. Go to your tickets and click on one\n" +
+                            "2. Scroll to the comments section\n" +
+                            "3. Type your comment and submit\n\n" +
+                            "Both users and staff can communicate through comments.")
                     .category("comment")
-                    .suggestions(List.of("How do I create a ticket?", "Can I edit my comment?"))
+                    .suggestions(List.of())
+                    .actions(List.of(
+                            nav("📋 View My Tickets", "/tickets", "📋"),
+                            nav("🎫 Create New Ticket", "/tickets/create", "🎫")
+                    ))
                     .build();
         }
 
@@ -190,47 +252,49 @@ public class ChatService {
         if (matchesAny(msg, "notification", "alert", "unread", "bell", "notify")) {
             return ChatResponse.builder()
                     .reply("🔔 **Notifications:**\n\n" +
-                            "You'll receive notifications for:\n" +
-                            "• Booking approvals or rejections\n" +
+                            "You receive notifications for:\n" +
+                            "• Booking approvals/rejections\n" +
                             "• Ticket status updates\n" +
                             "• New comments on your tickets\n\n" +
-                            "Click the **bell icon** in the navbar to view your notifications. Unread notifications are shown with a badge count.")
+                            "Click below to view all your notifications!")
                     .category("notification")
-                    .suggestions(List.of("How do I mark notifications as read?", "Where are my bookings?"))
+                    .suggestions(List.of())
+                    .actions(List.of(
+                            nav("🔔 View Notifications", "/notifications", "🔔"),
+                            nav("📅 My Bookings", "/bookings", "📅"),
+                            nav("🎫 My Tickets", "/tickets", "🎫")
+                    ))
                     .build();
         }
 
         // Admin features
         if (matchesAny(msg, "admin", "manage", "admin panel", "admin feature", "manage user", "user management", "roles")) {
             return ChatResponse.builder()
-                    .reply("👑 **Admin Features:**\n\n" +
-                            "Admins have access to additional features:\n\n" +
-                            "• **Manage Bookings** — Approve or reject booking requests\n" +
-                            "• **Manage Tickets** — Review, assign technicians, update ticket status\n" +
-                            "• **Manage Users** — View all users, update roles (Admin/User/Technician)\n" +
-                            "• **Create Resources** — Add new campus resources (rooms, labs, equipment)\n\n" +
-                            "Admin options are available in the dropdown menu in the navigation bar.")
+                    .reply("👑 **Admin Quick Actions:**\n\n" +
+                            "As an admin, you can manage the entire campus operations. Use the buttons below for quick access:")
                     .category("admin")
-                    .suggestions(List.of("How do I create a resource?", "How do I approve bookings?", "How do I assign a technician?"))
+                    .suggestions(List.of())
+                    .actions(List.of(
+                            nav("📅 Manage Bookings", "/bookings/manage", "📅"),
+                            nav("🎫 Manage Tickets", "/tickets/manage", "🎫"),
+                            nav("👥 Manage Users", "/admin/users", "👥"),
+                            nav("➕ Add Resource", "/resources/create", "➕"),
+                            nav("📋 View Resources", "/resources", "📋")
+                    ))
                     .build();
         }
 
         // Create resource (admin)
         if (matchesAny(msg, "create resource", "add resource", "new resource", "register resource")) {
             return ChatResponse.builder()
-                    .reply("➕ **Creating a New Resource (Admin only):**\n\n" +
-                            "1. Go to the **Resources** page\n" +
-                            "2. Click **Add Resource**\n" +
-                            "3. Fill in:\n" +
-                            "   • **Name** — Resource name\n" +
-                            "   • **Type** — Lecture Hall, Lab, Study Room, Equipment, etc.\n" +
-                            "   • **Location** — Where it's located\n" +
-                            "   • **Capacity** — Number of people it can accommodate\n" +
-                            "   • **Description** — Additional details\n" +
-                            "4. Click **Create**\n\n" +
-                            "Note: Only admins can create, edit, or delete resources.")
+                    .reply("➕ **Create a New Resource (Admin only):**\n\n" +
+                            "Click the button below to go directly to the resource creation form!")
                     .category("admin")
-                    .suggestions(List.of("What resources are available?", "How do I book a resource?"))
+                    .suggestions(List.of())
+                    .actions(List.of(
+                            nav("➕ Create Resource", "/resources/create", "➕"),
+                            nav("📋 View Resources", "/resources", "📋")
+                    ))
                     .build();
         }
 
@@ -238,47 +302,58 @@ public class ChatService {
         if (matchesAny(msg, "login", "sign in", "log in", "authentication", "password", "account", "register", "sign up", "google login", "oauth")) {
             return ChatResponse.builder()
                     .reply("🔐 **Authentication:**\n\n" +
-                            "You can access the platform in two ways:\n\n" +
-                            "1. **Email & Password** — Register with your email, then log in\n" +
-                            "2. **Google Sign-In** — Click \"Sign in with Google\" for quick access\n\n" +
-                            "After logging in, you'll be redirected to your Dashboard with an overview of your bookings, tickets, and notifications.")
+                            "You're currently logged in! You can access:\n\n" +
+                            "• Your Dashboard\n" +
+                            "• Resources & Bookings\n" +
+                            "• Support Tickets\n" +
+                            "• Notifications")
                     .category("auth")
-                    .suggestions(List.of("Tell me about the dashboard", "What can I do on this platform?"))
+                    .suggestions(List.of())
+                    .actions(List.of(
+                            nav("🏠 Go to Dashboard", "/", "🏠"),
+                            nav("📋 Browse Resources", "/resources", "📋")
+                    ))
                     .build();
         }
 
         // Dashboard
         if (matchesAny(msg, "dashboard", "home", "overview", "main page")) {
             return ChatResponse.builder()
-                    .reply("🏠 **Dashboard:**\n\n" +
-                            "The Dashboard is your home page and shows:\n\n" +
-                            "• **Resource count** — Total campus resources\n" +
-                            "• **My Bookings** — Number of your bookings\n" +
-                            "• **My Tickets** — Number of your tickets\n" +
-                            "• **Unread Alerts** — Notification count\n" +
-                            "• **Recent Bookings** — Your latest booking activity\n" +
-                            "• **Recent Tickets** — Your latest ticket activity\n\n" +
-                            "Click any card to navigate to that section.")
+                    .reply("🏠 **Dashboard** shows your campus overview:\n\n" +
+                            "• Resource count, bookings, tickets & notifications\n" +
+                            "• Recent activity\n\n" +
+                            "Click below to go there or take other actions!")
                     .category("dashboard")
-                    .suggestions(List.of("How do I book a resource?", "How do I create a ticket?", "What resources are available?"))
+                    .suggestions(List.of())
+                    .actions(List.of(
+                            nav("🏠 Go to Dashboard", "/", "🏠"),
+                            nav("📋 Browse Resources", "/resources", "📋"),
+                            nav("📅 My Bookings", "/bookings", "📅"),
+                            nav("🎫 My Tickets", "/tickets", "🎫")
+                    ))
                     .build();
         }
 
         // Help / what can you do
         if (matchesAny(msg, "help", "what can you do", "capabilities", "features", "options", "menu", "commands")) {
             return ChatResponse.builder()
-                    .reply("🤖 **I can help you with:**\n\n" +
-                            "📋 **Resources** — View available campus resources\n" +
-                            "📅 **Bookings** — How to book, view, or cancel bookings\n" +
-                            "🎫 **Tickets** — Create & track support tickets\n" +
-                            "💬 **Comments** — Add comments to tickets\n" +
-                            "🔔 **Notifications** — Manage your alerts\n" +
-                            "👑 **Admin** — Admin features & management\n" +
-                            "🔐 **Account** — Login & authentication help\n" +
-                            "🏠 **Dashboard** — Platform overview\n\n" +
-                            "Just type your question or pick a suggestion below!")
+                    .reply("🤖 **I'm your campus assistant! Here's what I can do:**\n\n" +
+                            "📋 **Show resources** & let you book them directly\n" +
+                            "📅 **Navigate to bookings** — view, create, or cancel\n" +
+                            "🎫 **Create tickets** — report issues instantly\n" +
+                            "🔔 **Check notifications** — stay updated\n" +
+                            "👑 **Admin tools** — manage everything\n\n" +
+                            "Click any button below to take action right away!")
                     .category("help")
-                    .suggestions(List.of("What resources are available?", "How do I book a resource?", "How do I create a ticket?", "Tell me about this platform"))
+                    .suggestions(List.of())
+                    .actions(List.of(
+                            nav("📋 Browse Resources", "/resources", "📋"),
+                            nav("📅 My Bookings", "/bookings", "📅"),
+                            nav("🎫 Create Ticket", "/tickets/create", "🎫"),
+                            nav("🔔 Notifications", "/notifications", "🔔"),
+                            nav("🏠 Dashboard", "/", "🏠"),
+                            query("🔍 Show available resources", "What resources are available?", "🔍")
+                    ))
                     .build();
         }
 
@@ -304,9 +379,16 @@ public class ChatService {
 
         // Default — unrecognized
         return ChatResponse.builder()
-                .reply("🤔 I'm not sure I understand that. I'm the Smart Campus Hub assistant and I can help with resources, bookings, tickets, and more. Could you try rephrasing, or pick one of the suggestions below?")
+                .reply("🤔 I'm not sure I understand that. Try one of the quick actions below, or ask me about resources, bookings, tickets, or admin features!")
                 .category("unknown")
-                .suggestions(List.of("What can you do?", "How do I book a resource?", "How do I create a ticket?", "What resources are available?"))
+                .suggestions(List.of())
+                .actions(List.of(
+                        nav("📋 Browse Resources", "/resources", "📋"),
+                        nav("📅 My Bookings", "/bookings", "📅"),
+                        nav("🎫 Create Ticket", "/tickets/create", "🎫"),
+                        nav("🏠 Dashboard", "/", "🏠"),
+                        query("❓ What can you do?", "What can you do?", "❓")
+                ))
                 .build();
     }
 
@@ -316,7 +398,11 @@ public class ChatService {
             return ChatResponse.builder()
                     .reply("📋 No **" + label + "** are currently listed. An admin can add them from the Resources page.")
                     .category("resources")
-                    .suggestions(List.of("What resources are available?", "How do I book a resource?"))
+                    .suggestions(List.of())
+                    .actions(List.of(
+                            nav("➕ Add Resource (Admin)", "/resources/create", "➕"),
+                            nav("📋 View All Resources", "/resources", "📋")
+                    ))
                     .build();
         }
 
@@ -327,12 +413,21 @@ public class ChatService {
             if (r.getCapacity() > 0) sb.append(" (Capacity: ").append(r.getCapacity()).append(")");
             sb.append(" [").append(r.getStatus()).append("]\n");
         }
-        sb.append("\nGo to the **Resources** page to view details or book one.");
+        sb.append("\nClick a button below to book one directly!");
+
+        List<ActionButton> actions = new ArrayList<>();
+        actions.add(nav("📋 View All Resources", "/resources", "📋"));
+        for (Resource r : resources) {
+            if (r.getId() != null) {
+                actions.add(nav("📅 Book: " + r.getName(), "/bookings/create/" + r.getId(), "📅"));
+            }
+        }
 
         return ChatResponse.builder()
                 .reply(sb.toString())
                 .category("resources")
-                .suggestions(List.of("How do I book a resource?", "Show all resources", "Tell me about bookings"))
+                .suggestions(List.of())
+                .actions(actions)
                 .build();
     }
 

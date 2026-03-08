@@ -15,4 +15,16 @@ public class ChatResponse {
     private String reply;
     private String category;
     private List<String> suggestions;
+    private List<ActionButton> actions;
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ActionButton {
+        private String label;
+        private String type;  // "navigate", "query"
+        private String value; // route path or query text
+        private String icon;  // emoji icon
+    }
 }
