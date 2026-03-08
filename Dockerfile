@@ -11,5 +11,6 @@ FROM eclipse-temurin:17-jre
 WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
 RUN mkdir -p /app/uploads
-EXPOSE 8080
+ENV PORT=8080
+EXPOSE ${PORT}
 ENTRYPOINT ["java", "-jar", "app.jar"]
