@@ -106,6 +106,8 @@ export const adminAPI = {
 // Chat APIs
 export const chatAPI = {
   sendMessage: (message) => api.post('/chat', { message }),
+  createBooking: (data) => api.post('/chat/book', data),
+  createTicket: (data) => api.post('/chat/ticket', data),
 };
 
 export default api;

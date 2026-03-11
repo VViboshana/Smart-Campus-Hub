@@ -26,20 +26,25 @@ public class ChatService {
         return ActionButton.builder().label(label).type("query").value(queryText).icon(icon).build();
     }
 
+    private static ActionButton flow(String label, String flowName, String icon) {
+        return ActionButton.builder().label(label).type("flow").value(flowName).icon(icon).build();
+    }
+
     public ChatResponse processMessage(String message) {
         String msg = message.toLowerCase().trim();
 
         // Greeting
         if (matchesAny(msg, "hello", "hi", "hey", "good morning", "good afternoon", "good evening", "howdy", "greetings")) {
             return ChatResponse.builder()
-                    .reply("👋 Hello! Welcome to the Smart Campus Hub assistant. I can help you navigate, book resources, manage tickets, and more. Use the quick actions below or ask me anything!")
+                    .reply("👋 Hello! Welcome to the Smart Campus Hub assistant. I can **book resources**, **raise tickets**, navigate you around, and more!")
                     .category("greeting")
                     .suggestions(List.of())
                     .actions(List.of(
+                            flow("📅 Book a Resource", "booking", "📅"),
+                            flow("🎫 Raise a Ticket", "ticket", "🎫"),
                             nav("📋 Browse Resources", "/resources", "📋"),
                             nav("📅 My Bookings", "/bookings", "📅"),
                             nav("🎫 My Tickets", "/tickets", "🎫"),
-                            nav("🏠 Dashboard", "/", "🏠"),
                             query("❓ What can you do?", "What can you do?", "❓")
                     ))
                     .build();
@@ -140,17 +145,12 @@ public class ChatService {
         // Booking — how to / go book
         if (matchesAny(msg, "book", "booking", "reserve", "reservation", "how to book", "make a booking", "schedule")) {
             return ChatResponse.builder()
-                    .reply("📅 **Ready to book a resource?**\n\n" +
-                            "Choose a quick action below, or follow these steps:\n" +
-                            "1. Browse resources\n" +
-                            "2. Pick one and click **Book Now**\n" +
-                            "3. Set your date, time, and purpose\n" +
-                            "4. Submit — an admin will approve it!\n\n" +
-                            "You'll get a notification once reviewed.")
+                    .reply("📅 **Ready to book a resource?**\n\nI can help you book one right here in the chat! Click the button below to start, or browse resources to pick one yourself.")
                     .category("booking")
                     .suggestions(List.of())
                     .actions(List.of(
-                            nav("📋 Browse Resources to Book", "/resources", "📋"),
+                            flow("📅 Start Booking Now", "booking", "📅"),
+                            nav("📋 Browse Resources", "/resources", "📋"),
                             nav("📅 View My Bookings", "/bookings", "📅"),
                             query("🔍 What resources are available?", "What resources are available?", "🔍")
                     ))
@@ -196,17 +196,12 @@ public class ChatService {
         // Tickets — how to create
         if (matchesAny(msg, "ticket", "create ticket", "submit ticket", "report issue", "raise ticket", "support ticket", "maintenance", "issue", "problem", "complaint")) {
             return ChatResponse.builder()
-                    .reply("🎫 **Need to report an issue?**\n\n" +
-                            "Click the button below to create a ticket directly, or follow these steps:\n" +
-                            "1. Go to **Create Ticket**\n" +
-                            "2. Enter title, description, category, and priority\n" +
-                            "3. Optionally attach images\n" +
-                            "4. Submit!\n\n" +
-                            "A technician or admin will review and respond to your ticket.")
+                    .reply("🎫 **Need to report an issue?**\n\nI can help you create a ticket right here in the chat! Click the button below to start.")
                     .category("ticket")
                     .suggestions(List.of())
                     .actions(List.of(
-                            nav("🎫 Create Ticket Now", "/tickets/create", "🎫"),
+                            flow("🎫 Start Ticket Now", "ticket", "🎫"),
+                            nav("🎫 Create Ticket (Full Form)", "/tickets/create", "🎫"),
                             nav("📋 View My Tickets", "/tickets", "📋"),
                             query("📊 Check ticket status", "my ticket status", "📊")
                     ))
@@ -338,21 +333,21 @@ public class ChatService {
         if (matchesAny(msg, "help", "what can you do", "capabilities", "features", "options", "menu", "commands")) {
             return ChatResponse.builder()
                     .reply("🤖 **I'm your campus assistant! Here's what I can do:**\n\n" +
-                            "📋 **Show resources** & let you book them directly\n" +
-                            "📅 **Navigate to bookings** — view, create, or cancel\n" +
-                            "🎫 **Create tickets** — report issues instantly\n" +
+                            "� **Book resources** right in this chat!\n" +
+                            "🎫 **Raise tickets** step by step through chat!\n" +
+                            "📋 **Show resources** & navigate to any page\n" +
                             "🔔 **Check notifications** — stay updated\n" +
                             "👑 **Admin tools** — manage everything\n\n" +
                             "Click any button below to take action right away!")
                     .category("help")
                     .suggestions(List.of())
                     .actions(List.of(
+                            flow("📅 Book a Resource", "booking", "📅"),
+                            flow("🎫 Raise a Ticket", "ticket", "🎫"),
                             nav("📋 Browse Resources", "/resources", "📋"),
                             nav("📅 My Bookings", "/bookings", "📅"),
-                            nav("🎫 Create Ticket", "/tickets/create", "🎫"),
                             nav("🔔 Notifications", "/notifications", "🔔"),
-                            nav("🏠 Dashboard", "/", "🏠"),
-                            query("🔍 Show available resources", "What resources are available?", "🔍")
+                            nav("🏠 Dashboard", "/", "🏠")
                     ))
                     .build();
         }
@@ -383,9 +378,9 @@ public class ChatService {
                 .category("unknown")
                 .suggestions(List.of())
                 .actions(List.of(
+                        flow("📅 Book a Resource", "booking", "📅"),
+                        flow("🎫 Raise a Ticket", "ticket", "🎫"),
                         nav("📋 Browse Resources", "/resources", "📋"),
-                        nav("📅 My Bookings", "/bookings", "📅"),
-                        nav("🎫 Create Ticket", "/tickets/create", "🎫"),
                         nav("🏠 Dashboard", "/", "🏠"),
                         query("❓ What can you do?", "What can you do?", "❓")
                 ))
