@@ -9,14 +9,15 @@ import org.springframework.data.mongodb.core.convert.DefaultDbRefResolver;
 import org.springframework.data.mongodb.core.convert.DefaultMongoTypeMapper;
 import org.springframework.data.mongodb.core.convert.MappingMongoConverter;
 import org.springframework.data.mongodb.core.mapping.MongoMappingContext;
+import org.springframework.lang.NonNull;
 
 @Configuration
 @EnableMongoAuditing
 public class MongoConfig {
 
     @Bean
-    public MappingMongoConverter mappingMongoConverter(MongoDatabaseFactory factory,
-                                                        MongoMappingContext context) {
+    public MappingMongoConverter mappingMongoConverter(@NonNull MongoDatabaseFactory factory,
+                                                        @NonNull MongoMappingContext context) {
         DbRefResolver dbRefResolver = new DefaultDbRefResolver(factory);
         MappingMongoConverter converter = new MappingMongoConverter(dbRefResolver, context);
         // Remove _class field from MongoDB documents
