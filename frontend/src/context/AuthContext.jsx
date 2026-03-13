@@ -60,6 +60,13 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
+  const deleteAccount = async () => {
+    await authAPI.deleteMe();
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setUser(null);
+  };
+
   const isAdmin = () => {
     return user?.roles?.includes('ADMIN');
   };
@@ -74,7 +81,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, isAdmin, isTechnician, loadUser, setAuthToken }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, deleteAccount, isAdmin, isTechnician, loadUser, setAuthToken }}>
       {children}
     </AuthContext.Provider>
   );

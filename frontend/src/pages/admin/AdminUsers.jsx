@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { adminAPI } from '../../services/api';
 import { toast } from 'react-toastify';
-import { FiShield, FiSearch } from 'react-icons/fi';
+import { FiShield, FiSearch, FiTrash2 } from 'react-icons/fi';
+import { useAuth } from '../../context/AuthContext';
 
 const AdminUsers = () => {
+  const { user: currentUser } = useAuth();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -33,6 +35,27 @@ const AdminUsers = () => {
       fetchUsers();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to update roles');
+    }
+  };
+
+  const handleDeleteUser = async (targetUser) => {
+    if (targetUser.id === currentUser?.id) {
+      toast.info('Use "Delete My Account" from your profile menu to remove your own account.');
+      return;
+    }
+
+    const confirmed = window.confirm(`Delete account for ${targetUser.name || targetUser.email}? This action cannot be undone.`);
+    if (!confirmed) return;
+
+    try {
+      await adminAPI.deleteUser(targetUser.id);
+      toast.success('User account deleted');
+      if (editingUser?.id === targetUser.id) {
+        setEditingUser(null);
+      }
+      fetchUsers();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to delete user account');
     }
   };
 
@@ -119,12 +142,20 @@ const AdminUsers = () => {
                   </div>
                 </td>
                 <td className="px-6 py-4 text-right">
-                  <button
-                    onClick={() => { setEditingUser(user); setSelectedRoles([...(user.roles || [])]); }}
-                    className="text-sm text-blue-600 hover:text-blue-700 font-medium"
-                  >
-                    <FiShield className="w-4 h-4 inline mr-1" />Edit Roles
-                  </button>
+                  <div className="flex justify-end items-center gap-3">
+                    <button
+                      onClick={() => { setEditingUser(user); setSelectedRoles([...(user.roles || [])]); }}
+                      className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                    >
+                      <FiShield className="w-4 h-4 inline mr-1" />Edit Roles
+                    </button>
+                    <button
+                      onClick={() => handleDeleteUser(user)}
+                      className="text-sm text-red-600 hover:text-red-700 font-medium"
+                    >
+                      <FiTrash2 className="w-4 h-4 inline mr-1" />Delete User
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}

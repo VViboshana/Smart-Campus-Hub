@@ -45,4 +45,11 @@ public class AdminController {
         user.setPassword(null);
         return ResponseEntity.ok(ApiResponse.success("User roles updated successfully", user));
     }
+
+    // DELETE - Remove user account
+    @DeleteMapping("/users/{userId}")
+    public ResponseEntity<ApiResponse<Void>> deleteUser(@PathVariable String userId) {
+        userService.deleteUserById(userId);
+        return ResponseEntity.ok(ApiResponse.success("User deleted successfully", null));
+    }
 }

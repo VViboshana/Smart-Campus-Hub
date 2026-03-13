@@ -41,6 +41,7 @@ export const authAPI = {
   login: (data) => api.post('/auth/login', data),
   register: (data) => api.post('/auth/register', data),
   getMe: () => api.get('/auth/me'),
+  deleteMe: () => api.delete('/auth/me'),
 };
 
 // Resource APIs
@@ -101,6 +102,7 @@ export const adminAPI = {
   getAllUsers: () => api.get('/admin/users'),
   getUsersByRole: (role) => api.get(`/admin/users/role/${role}`),
   updateUserRoles: (userId, roles) => api.put(`/admin/users/${userId}/roles`, roles),
+  deleteUser: (userId) => api.delete(`/admin/users/${userId}`),
 };
 
 // Chat APIs

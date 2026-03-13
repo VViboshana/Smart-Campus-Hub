@@ -136,6 +136,7 @@ Frontend runs on http://localhost:5173
 | POST   | /register     | Register new user    | No   |
 | POST   | /login        | Login & get JWT      | No   |
 | GET    | /me           | Get current user     | Yes  |
+| DELETE | /me           | Delete own account   | Yes  |
 
 ### Resources (`/api/resources`)
 | Method | Endpoint       | Description          | Auth  |
@@ -194,6 +195,7 @@ Frontend runs on http://localhost:5173
 | GET    | /users                | List all users       | ADMIN |
 | GET    | /users/role/{role}    | Users by role        | ADMIN |
 | PUT    | /users/{userId}/roles | Update user roles    | ADMIN |
+| DELETE | /users/{userId}       | Delete user account  | ADMIN |
 
 ## 🧪 Testing
 

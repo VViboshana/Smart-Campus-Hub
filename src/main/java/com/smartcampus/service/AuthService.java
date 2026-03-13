@@ -102,6 +102,11 @@ public class AuthService {
                 .orElseThrow(() -> new BadRequestException("User not found"));
     }
 
+        public void deleteCurrentUser() {
+                User currentUser = getCurrentUser();
+                userRepository.delete(currentUser);
+        }
+
         private Set<Role> resolveRolesForEmail(String email) {
                 Set<Role> roles = new HashSet<>();
                 roles.add(Role.USER);

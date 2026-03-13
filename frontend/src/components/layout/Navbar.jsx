@@ -2,12 +2,13 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { notificationAPI } from '../../services/api';
-import { FiBell, FiMenu, FiX, FiLogOut, FiHome, FiGrid, FiCalendar, FiAlertCircle, FiUsers, FiChevronDown } from 'react-icons/fi';
+import { toast } from 'react-toastify';
+import { FiBell, FiMenu, FiX, FiLogOut, FiHome, FiGrid, FiCalendar, FiAlertCircle, FiUsers, FiChevronDown, FiTrash2 } from 'react-icons/fi';
 
 const NOTIFICATION_CHANGE_EVENT = 'notifications:changed';
 
 const Navbar = () => {
-  const { user, logout, isAdmin, isTechnician } = useAuth();
+  const { user, logout, deleteAccount, isAdmin, isTechnician } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -41,6 +42,20 @@ const Navbar = () => {
   const handleLogout = () => {
     logout();
     navigate('/login');
+  };
+
+  const handleDeleteAccount = async () => {
+    const confirmed = window.confirm('Are you sure you want to permanently delete your account? This cannot be undone.');
+    if (!confirmed) return;
+
+    try {
+      await deleteAccount();
+      setProfileMenuOpen(false);
+      toast.success('Account deleted successfully');
+      navigate('/register');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to delete account');
+    }
   };
 
   const navLinks = [
@@ -152,6 +167,13 @@ const Navbar = () => {
                   >
                     <FiLogOut />
                     <span>Logout</span>
+                  </button>
+                  <button
+                    onClick={handleDeleteAccount}
+                    className="flex items-center space-x-2 w-full px-4 py-2 text-sm text-red-700 hover:bg-red-50"
+                  >
+                    <FiTrash2 />
+                    <span>Delete My Account</span>
                   </button>
                 </div>
               )}

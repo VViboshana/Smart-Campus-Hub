@@ -36,4 +36,9 @@ public class UserService {
                 .filter(u -> u.getRoles().contains(role))
                 .toList();
     }
+
+    public void deleteUserById(String userId) {
+        User user = getUserById(userId);
+        userRepository.delete(user);
+    }
 }

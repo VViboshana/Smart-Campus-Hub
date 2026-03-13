@@ -38,4 +38,10 @@ public class AuthController {
         user.setPassword(null); // Don't expose password
         return ResponseEntity.ok(ApiResponse.success(user));
     }
+
+    @DeleteMapping("/me")
+    public ResponseEntity<ApiResponse<Void>> deleteCurrentUser() {
+        authService.deleteCurrentUser();
+        return ResponseEntity.ok(ApiResponse.success("Account deleted successfully", null));
+    }
 }
