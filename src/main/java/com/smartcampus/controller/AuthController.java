@@ -1,7 +1,9 @@
 package com.smartcampus.controller;
 
+import com.smartcampus.dto.request.ChangePasswordRequest;
 import com.smartcampus.dto.request.LoginRequest;
 import com.smartcampus.dto.request.RegisterRequest;
+import com.smartcampus.dto.request.UpdateProfileRequest;
 import com.smartcampus.dto.response.ApiResponse;
 import com.smartcampus.dto.response.AuthResponse;
 import com.smartcampus.model.User;
@@ -37,6 +39,18 @@ public class AuthController {
         User user = authService.getCurrentUser();
         user.setPassword(null); // Don't expose password
         return ResponseEntity.ok(ApiResponse.success(user));
+    }
+
+    @PutMapping("/me")
+    public ResponseEntity<ApiResponse<User>> updateCurrentUser(@Valid @RequestBody UpdateProfileRequest request) {
+        User updated = authService.updateCurrentUserProfile(request);
+        return ResponseEntity.ok(ApiResponse.success("Profile updated successfully", updated));
+    }
+
+    @PatchMapping("/me/password")
+    public ResponseEntity<ApiResponse<Void>> changeCurrentUserPassword(@Valid @RequestBody ChangePasswordRequest request) {
+        authService.changeCurrentUserPassword(request);
+        return ResponseEntity.ok(ApiResponse.success("Password updated successfully", null));
     }
 
     @DeleteMapping("/me")

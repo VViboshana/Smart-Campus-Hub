@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { notificationAPI } from '../../services/api';
 import { toast } from 'react-toastify';
-import { FiBell, FiMenu, FiX, FiLogOut, FiHome, FiGrid, FiCalendar, FiAlertCircle, FiUsers, FiChevronDown, FiTrash2 } from 'react-icons/fi';
+import { FiBell, FiMenu, FiX, FiLogOut, FiHome, FiGrid, FiCalendar, FiAlertCircle, FiUsers, FiChevronDown, FiTrash2, FiSettings } from 'react-icons/fi';
 
 const NOTIFICATION_CHANGE_EVENT = 'notifications:changed';
 
@@ -161,6 +161,14 @@ const Navbar = () => {
                     <p className="text-xs text-gray-500">{user?.email}</p>
                     <p className="text-xs text-blue-600 mt-1">{user?.roles?.join(', ')}</p>
                   </div>
+                  <Link
+                    to="/settings"
+                    onClick={() => setProfileMenuOpen(false)}
+                    className="flex items-center space-x-2 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                  >
+                    <FiSettings />
+                    <span>Settings</span>
+                  </Link>
                   <button
                     onClick={handleLogout}
                     className="flex items-center space-x-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50"

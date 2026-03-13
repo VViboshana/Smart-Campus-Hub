@@ -2,6 +2,8 @@ package com.smartcampus.service;
 
 import com.smartcampus.dto.request.LoginRequest;
 import com.smartcampus.dto.request.RegisterRequest;
+import com.smartcampus.dto.request.UpdateProfileRequest;
+import com.smartcampus.dto.request.ChangePasswordRequest;
 import com.smartcampus.dto.response.AuthResponse;
 import com.smartcampus.exception.BadRequestException;
 import com.smartcampus.model.Role;
@@ -103,6 +105,36 @@ public class AuthService {
                 return userRepository.findById(Objects.requireNonNull(userPrincipal.getId(), "user id must not be null"))
                 .orElseThrow(() -> new BadRequestException("User not found"));
     }
+
+        public User updateCurrentUserProfile(UpdateProfileRequest request) {
+                User currentUser = getCurrentUser();
+                currentUser.setName(request.getName().trim());
+                User saved = Objects.requireNonNull(
+                                userRepository.save(Objects.requireNonNull(currentUser, "current user must not be null")),
+                                "saved user must not be null"
+                );
+                saved.setPassword(null);
+                return saved;
+        }
+
+        public void changeCurrentUserPassword(ChangePasswordRequest request) {
+                User currentUser = getCurrentUser();
+
+                if (!"LOCAL".equalsIgnoreCase(currentUser.getProvider())) {
+                        throw new BadRequestException("Password change is only available for local accounts");
+                }
+
+                if (currentUser.getPassword() == null || !passwordEncoder.matches(request.getCurrentPassword(), currentUser.getPassword())) {
+                        throw new BadRequestException("Current password is incorrect");
+                }
+
+                if (request.getCurrentPassword().equals(request.getNewPassword())) {
+                        throw new BadRequestException("New password must be different from current password");
+                }
+
+                currentUser.setPassword(passwordEncoder.encode(request.getNewPassword()));
+                userRepository.save(currentUser);
+        }
 
         public void deleteCurrentUser() {
                 User currentUser = getCurrentUser();

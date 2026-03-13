@@ -26,6 +26,7 @@ import TicketDetail from './pages/tickets/TicketDetail';
 import TicketManagement from './pages/tickets/TicketManagement';
 import Notifications from './pages/Notifications';
 import AdminUsers from './pages/admin/AdminUsers';
+import Settings from './pages/Settings';
 
 const ProtectedRoute = ({ children, adminOnly = false }) => {
   const { user, loading } = useAuth();
@@ -73,6 +74,7 @@ function App() {
           <Route path="/tickets/:id" element={<ProtectedRoute><TicketDetail /></ProtectedRoute>} />
           <Route path="/tickets/manage" element={<ProtectedRoute adminOnly><TicketManagement /></ProtectedRoute>} />
           <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
+          <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
           <Route path="/admin/users" element={<ProtectedRoute adminOnly><AdminUsers /></ProtectedRoute>} />
 
           {/* Catch all */}
