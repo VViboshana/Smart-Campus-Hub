@@ -19,6 +19,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 @Service
@@ -51,7 +52,8 @@ public class AuthService {
                 .roles(roles)
                 .build();
 
-        user = userRepository.save(user);
+        user = Objects.requireNonNull(userRepository.save(Objects.requireNonNull(user, "user must not be null")),
+                "saved user must not be null");
 
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
@@ -79,7 +81,7 @@ public class AuthService {
         String token = tokenProvider.generateToken(authentication);
 
         UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
-        User user = userRepository.findById(userPrincipal.getId())
+        User user = userRepository.findById(Objects.requireNonNull(userPrincipal.getId(), "user id must not be null"))
                 .orElseThrow(() -> new BadRequestException("User not found"));
 
         return AuthResponse.builder()
@@ -98,13 +100,13 @@ public class AuthService {
             throw new BadRequestException("User not authenticated");
         }
         UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
-        return userRepository.findById(userPrincipal.getId())
+                return userRepository.findById(Objects.requireNonNull(userPrincipal.getId(), "user id must not be null"))
                 .orElseThrow(() -> new BadRequestException("User not found"));
     }
 
         public void deleteCurrentUser() {
                 User currentUser = getCurrentUser();
-                userRepository.delete(currentUser);
+                userRepository.delete(Objects.requireNonNull(currentUser, "current user must not be null"));
         }
 
         private Set<Role> resolveRolesForEmail(String email) {

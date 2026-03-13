@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -31,12 +32,13 @@ public class CommentService {
                 .content(request.getContent())
                 .build();
 
-        comment = commentRepository.save(comment);
+        comment = Objects.requireNonNull(commentRepository.save(Objects.requireNonNull(comment, "comment must not be null")),
+            "saved comment must not be null");
 
         // Notify ticket reporter if comment is by someone else
         if (!ticket.getReporterId().equals(currentUser.getId())) {
             notificationService.createNotification(
-                    ticket.getReporterId(),
+                    Objects.requireNonNull(ticket.getReporterId(), "ticket reporter id must not be null"),
                     "New Comment on Ticket",
                     currentUser.getName() + " commented on your ticket: " + ticket.getTitle(),
                     Notification.NotificationType.TICKET_COMMENT,
@@ -48,7 +50,7 @@ public class CommentService {
         if (ticket.getAssignedTechnicianId() != null
                 && !ticket.getAssignedTechnicianId().equals(currentUser.getId())) {
             notificationService.createNotification(
-                    ticket.getAssignedTechnicianId(),
+                    Objects.requireNonNull(ticket.getAssignedTechnicianId(), "assigned technician id must not be null"),
                     "New Comment on Ticket",
                     currentUser.getName() + " commented on ticket: " + ticket.getTitle(),
                     Notification.NotificationType.TICKET_COMMENT,
@@ -65,7 +67,8 @@ public class CommentService {
             throw new UnauthorizedException("You can only edit your own comments");
         }
         comment.setContent(request.getContent());
-        return commentRepository.save(comment);
+        return Objects.requireNonNull(commentRepository.save(Objects.requireNonNull(comment, "comment must not be null")),
+            "saved comment must not be null");
     }
 
     public void deleteComment(String commentId, User currentUser) {
@@ -77,7 +80,7 @@ public class CommentService {
         if (!isOwner && !isAdmin) {
             throw new UnauthorizedException("You can only delete your own comments");
         }
-        commentRepository.delete(comment);
+        commentRepository.delete(Objects.requireNonNull(comment, "comment must not be null"));
     }
 
     public List<Comment> getTicketComments(String ticketId) {
@@ -85,7 +88,7 @@ public class CommentService {
     }
 
     public Comment getCommentById(String id) {
-        return commentRepository.findById(id)
+        return commentRepository.findById(Objects.requireNonNull(id, "comment id must not be null"))
                 .orElseThrow(() -> new ResourceNotFoundException("Comment", "id", id));
     }
 }

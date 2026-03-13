@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 @Service
@@ -17,7 +18,7 @@ public class UserService {
     private final UserRepository userRepository;
 
     public User getUserById(String id) {
-        return userRepository.findById(id)
+        return userRepository.findById(Objects.requireNonNull(id, "user id must not be null"))
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
     }
 
@@ -28,7 +29,8 @@ public class UserService {
     public User updateUserRoles(String userId, Set<Role> roles) {
         User user = getUserById(userId);
         user.setRoles(roles);
-        return userRepository.save(user);
+        return Objects.requireNonNull(userRepository.save(Objects.requireNonNull(user, "user must not be null")),
+                "saved user must not be null");
     }
 
     public List<User> getUsersByRole(Role role) {
@@ -39,6 +41,6 @@ public class UserService {
 
     public void deleteUserById(String userId) {
         User user = getUserById(userId);
-        userRepository.delete(user);
+        userRepository.delete(Objects.requireNonNull(user, "user must not be null"));
     }
 }

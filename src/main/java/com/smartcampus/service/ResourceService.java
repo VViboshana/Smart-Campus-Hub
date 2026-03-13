@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -31,7 +32,8 @@ public class ResourceService {
                 .amenities(request.getAmenities())
                 .imageUrl(request.getImageUrl())
                 .build();
-        return resourceRepository.save(resource);
+        return Objects.requireNonNull(resourceRepository.save(Objects.requireNonNull(resource, "resource must not be null")),
+            "saved resource must not be null");
     }
 
     public Resource updateResource(String id, ResourceRequest request) {
@@ -55,16 +57,17 @@ public class ResourceService {
         if (request.getImageUrl() != null) {
             resource.setImageUrl(request.getImageUrl());
         }
-        return resourceRepository.save(resource);
+        return Objects.requireNonNull(resourceRepository.save(Objects.requireNonNull(resource, "resource must not be null")),
+            "saved resource must not be null");
     }
 
     public void deleteResource(String id) {
         Resource resource = getResourceById(id);
-        resourceRepository.delete(resource);
+        resourceRepository.delete(Objects.requireNonNull(resource, "resource must not be null"));
     }
 
     public Resource getResourceById(String id) {
-        return resourceRepository.findById(id)
+        return resourceRepository.findById(Objects.requireNonNull(id, "resource id must not be null"))
                 .orElseThrow(() -> new ResourceNotFoundException("Resource", "id", id));
     }
 

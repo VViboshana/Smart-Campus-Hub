@@ -14,6 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -52,7 +53,8 @@ public class TicketService {
             ticket.setAttachmentUrls(imageUrls);
         }
 
-        return ticketRepository.save(ticket);
+        return Objects.requireNonNull(ticketRepository.save(Objects.requireNonNull(ticket, "ticket must not be null")),
+            "saved ticket must not be null");
     }
 
     public Ticket updateTicketStatus(String ticketId, TicketUpdateRequest request, User currentUser) {
@@ -72,14 +74,14 @@ public class TicketService {
         }
 
         if (request.getAssignedTechnicianId() != null) {
-            User technician = userRepository.findById(request.getAssignedTechnicianId())
+                User technician = userRepository.findById(Objects.requireNonNull(request.getAssignedTechnicianId(), "assigned technician id must not be null"))
                     .orElseThrow(() -> new ResourceNotFoundException("User", "id", request.getAssignedTechnicianId()));
             ticket.setAssignedTechnicianId(technician.getId());
             ticket.setAssignedTechnicianName(technician.getName());
 
             // Notify technician of assignment
             notificationService.createNotification(
-                    technician.getId(),
+                    Objects.requireNonNull(technician.getId(), "technician id must not be null"),
                     "Ticket Assigned",
                     "You have been assigned to ticket: " + ticket.getTitle(),
                     Notification.NotificationType.TICKET_ASSIGNED,
@@ -95,11 +97,12 @@ public class TicketService {
             ticket.setClosedAt(LocalDateTime.now());
         }
 
-        ticket = ticketRepository.save(ticket);
+        ticket = Objects.requireNonNull(ticketRepository.save(Objects.requireNonNull(ticket, "ticket must not be null")),
+            "saved ticket must not be null");
 
         // Notify reporter of status change
         notificationService.createNotification(
-                ticket.getReporterId(),
+            Objects.requireNonNull(ticket.getReporterId(), "ticket reporter id must not be null"),
                 "Ticket Status Updated",
                 "Your ticket '" + ticket.getTitle() + "' status changed to " + request.getStatus(),
                 Notification.NotificationType.TICKET_STATUS_CHANGED,
@@ -111,7 +114,7 @@ public class TicketService {
 
     public Ticket assignTechnician(String ticketId, String technicianId) {
         Ticket ticket = getTicketById(ticketId);
-        User technician = userRepository.findById(technicianId)
+        User technician = userRepository.findById(Objects.requireNonNull(technicianId, "technician id must not be null"))
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", technicianId));
 
         ticket.setAssignedTechnicianId(technician.getId());
@@ -121,10 +124,11 @@ public class TicketService {
             ticket.setStatus(TicketStatus.IN_PROGRESS);
         }
 
-        ticket = ticketRepository.save(ticket);
+        ticket = Objects.requireNonNull(ticketRepository.save(Objects.requireNonNull(ticket, "ticket must not be null")),
+            "saved ticket must not be null");
 
         notificationService.createNotification(
-                technician.getId(),
+            Objects.requireNonNull(technician.getId(), "technician id must not be null"),
                 "Ticket Assigned",
                 "You have been assigned to ticket: " + ticket.getTitle(),
                 Notification.NotificationType.TICKET_ASSIGNED,
@@ -132,7 +136,7 @@ public class TicketService {
         );
 
         notificationService.createNotification(
-                ticket.getReporterId(),
+            Objects.requireNonNull(ticket.getReporterId(), "ticket reporter id must not be null"),
                 "Technician Assigned",
                 "A technician has been assigned to your ticket: " + ticket.getTitle(),
                 Notification.NotificationType.TICKET_STATUS_CHANGED,
@@ -143,7 +147,7 @@ public class TicketService {
     }
 
     public Ticket getTicketById(String id) {
-        return ticketRepository.findById(id)
+        return ticketRepository.findById(Objects.requireNonNull(id, "ticket id must not be null"))
                 .orElseThrow(() -> new ResourceNotFoundException("Ticket", "id", id));
     }
 
@@ -173,7 +177,7 @@ public class TicketService {
         if (!ticket.getReporterId().equals(currentUser.getId()) && !isAdmin) {
             throw new UnauthorizedException("You can only delete your own tickets");
         }
-        ticketRepository.delete(ticket);
+        ticketRepository.delete(Objects.requireNonNull(ticket, "ticket must not be null"));
     }
 
     private void validateStatusTransition(TicketStatus current, TicketStatus next) {

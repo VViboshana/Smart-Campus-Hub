@@ -11,6 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -28,7 +29,14 @@ public class FileStorageService {
     }
 
     public String storeFile(MultipartFile file) {
-        String originalFileName = StringUtils.cleanPath(file.getOriginalFilename());
+        String rawOriginalFileName = Optional.ofNullable(file.getOriginalFilename())
+                .filter(StringUtils::hasText)
+                .orElseThrow(() -> new BadRequestException("File name is missing"));
+        Path normalizedNamePath = Paths.get(rawOriginalFileName).getFileName();
+        if (normalizedNamePath == null || !StringUtils.hasText(normalizedNamePath.toString())) {
+            throw new BadRequestException("File name is invalid");
+        }
+        String originalFileName = normalizedNamePath.toString();
 
         // Validate file type
         String contentType = file.getContentType();

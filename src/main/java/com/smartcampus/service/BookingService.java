@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -65,7 +66,8 @@ public class BookingService {
                 .status(BookingStatus.PENDING)
                 .build();
 
-        return bookingRepository.save(booking);
+        return Objects.requireNonNull(bookingRepository.save(Objects.requireNonNull(booking, "booking must not be null")),
+            "saved booking must not be null");
     }
 
     public Booking reviewBooking(String bookingId, BookingReviewRequest request, User admin) {
@@ -84,7 +86,8 @@ public class BookingService {
         booking.setReviewedBy(admin.getId());
         booking.setReviewedAt(LocalDateTime.now());
 
-        booking = bookingRepository.save(booking);
+        booking = Objects.requireNonNull(bookingRepository.save(Objects.requireNonNull(booking, "booking must not be null")),
+            "saved booking must not be null");
 
         // Send notification
         Notification.NotificationType notifType = request.getStatus() == BookingStatus.APPROVED
@@ -93,7 +96,7 @@ public class BookingService {
 
         String statusText = request.getStatus() == BookingStatus.APPROVED ? "approved" : "rejected";
         notificationService.createNotification(
-                booking.getUserId(),
+            Objects.requireNonNull(booking.getUserId(), "booking user id must not be null"),
                 "Booking " + statusText,
                 "Your booking for " + booking.getResourceName() + " on " + booking.getBookingDate()
                         + " has been " + statusText + "."
@@ -120,11 +123,12 @@ public class BookingService {
         }
 
         booking.setStatus(BookingStatus.CANCELLED);
-        booking = bookingRepository.save(booking);
+        booking = Objects.requireNonNull(bookingRepository.save(Objects.requireNonNull(booking, "booking must not be null")),
+            "saved booking must not be null");
 
         // Notify the user
         notificationService.createNotification(
-                booking.getUserId(),
+            Objects.requireNonNull(booking.getUserId(), "booking user id must not be null"),
                 "Booking Cancelled",
                 "Your booking for " + booking.getResourceName() + " on " + booking.getBookingDate() + " has been cancelled.",
                 Notification.NotificationType.BOOKING_CANCELLED,
@@ -135,7 +139,7 @@ public class BookingService {
     }
 
     public Booking getBookingById(String id) {
-        return bookingRepository.findById(id)
+        return bookingRepository.findById(Objects.requireNonNull(id, "booking id must not be null"))
                 .orElseThrow(() -> new ResourceNotFoundException("Booking", "id", id));
     }
 
