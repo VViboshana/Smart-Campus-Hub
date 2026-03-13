@@ -95,7 +95,24 @@ jwt.expiration=86400000
 # Google OAuth2 (optional)
 spring.security.oauth2.client.registration.google.client-id=YOUR_GOOGLE_CLIENT_ID
 spring.security.oauth2.client.registration.google.client-secret=YOUR_GOOGLE_CLIENT_SECRET
+
+# Auto-role by signup email format (optional)
+app.auth.admin-email-regex=^(?i)admin[0-9]*@smartcampus\.edu$
+app.auth.technician-email-regex=^(?i)(tech|technician)[0-9]*@smartcampus\.edu$
 ```
+
+### Role Assignment by Email at Signup
+
+When a user signs up, roles can be assigned automatically from email format:
+
+- `admin@smartcampus.edu`, `admin1@smartcampus.edu` -> `USER + ADMIN`
+- `tech@smartcampus.edu`, `technician2@smartcampus.edu` -> `USER + TECHNICIAN`
+- Any other valid email -> `USER`
+
+You can customize these formats via env vars:
+
+- `ADMIN_EMAIL_REGEX`
+- `TECHNICIAN_EMAIL_REGEX`
 
 ### 3. Start the Backend
 ```bash

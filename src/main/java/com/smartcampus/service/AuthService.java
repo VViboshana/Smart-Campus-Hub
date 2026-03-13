@@ -15,6 +15,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
@@ -29,13 +30,18 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider tokenProvider;
 
+        @Value("${app.auth.admin-email-regex:^(?i)admin[0-9]*@smartcampus\\.edu$}")
+        private String adminEmailRegex;
+
+        @Value("${app.auth.technician-email-regex:^(?i)(tech|technician)[0-9]*@smartcampus\\.edu$}")
+        private String technicianEmailRegex;
+
     public AuthResponse register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new BadRequestException("Email is already registered");
         }
 
-        Set<Role> roles = new HashSet<>();
-        roles.add(Role.USER);
+        Set<Role> roles = resolveRolesForEmail(request.getEmail());
 
         User user = User.builder()
                 .name(request.getName())
@@ -95,4 +101,19 @@ public class AuthService {
         return userRepository.findById(userPrincipal.getId())
                 .orElseThrow(() -> new BadRequestException("User not found"));
     }
+
+        private Set<Role> resolveRolesForEmail(String email) {
+                Set<Role> roles = new HashSet<>();
+                roles.add(Role.USER);
+
+                if (email != null && email.matches(adminEmailRegex)) {
+                        roles.add(Role.ADMIN);
+                }
+
+                if (email != null && email.matches(technicianEmailRegex)) {
+                        roles.add(Role.TECHNICIAN);
+                }
+
+                return roles;
+        }
 }
