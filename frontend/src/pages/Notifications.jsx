@@ -1,9 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { notificationAPI } from '../services/api';
 import { toast } from 'react-toastify';
 import { FiBell, FiCheck, FiCheckCircle, FiTrash2, FiCalendar, FiAlertCircle, FiMessageCircle } from 'react-icons/fi';
 
+const NOTIFICATION_CHANGE_EVENT = 'notifications:changed';
+
 const Notifications = () => {
+  const navigate = useNavigate();
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showUnread, setShowUnread] = useState(false);
@@ -11,6 +15,7 @@ const Notifications = () => {
   useEffect(() => { fetchNotifications(); }, [showUnread]);
 
   const fetchNotifications = async () => {
+    setLoading(true);
     try {
       const res = showUnread
         ? await notificationAPI.getUnread()
@@ -23,9 +28,14 @@ const Notifications = () => {
     }
   };
 
+  const emitNotificationChange = () => {
+    window.dispatchEvent(new Event(NOTIFICATION_CHANGE_EVENT));
+  };
+
   const handleMarkRead = async (id) => {
     try {
       await notificationAPI.markAsRead(id);
+      emitNotificationChange();
       fetchNotifications();
     } catch (err) {
       toast.error('Failed to mark as read');
@@ -35,28 +45,54 @@ const Notifications = () => {
   const handleMarkAllRead = async () => {
     try {
       await notificationAPI.markAllAsRead();
+      emitNotificationChange();
       fetchNotifications();
       toast.success('All notifications marked as read');
     } catch (err) {
-      toast.error('Failed');
+      toast.error('Failed to mark all notifications as read');
     }
   };
 
   const handleDelete = async (id) => {
     try {
       await notificationAPI.delete(id);
+      emitNotificationChange();
       fetchNotifications();
     } catch (err) {
       toast.error('Failed to delete');
     }
   };
 
+  const handleNotificationClick = async (notif) => {
+    if (!notif.read) {
+      try {
+        await notificationAPI.markAsRead(notif.id);
+        emitNotificationChange();
+      } catch (err) {
+        // continue navigation even if mark-as-read fails
+      }
+    }
+
+    if (notif.type?.startsWith('BOOKING_')) {
+      navigate('/bookings');
+      return;
+    }
+
+    if (notif.referenceId && notif.type?.startsWith('TICKET_')) {
+      navigate(`/tickets/${notif.referenceId}`);
+      return;
+    }
+
+    navigate('/notifications');
+  };
+
   const getIcon = (type) => {
     switch (type) {
       case 'BOOKING_APPROVED': return <FiCheckCircle className="w-5 h-5 text-green-500" />;
       case 'BOOKING_REJECTED': return <FiCalendar className="w-5 h-5 text-red-500" />;
+      case 'BOOKING_CANCELLED': return <FiCalendar className="w-5 h-5 text-orange-500" />;
       case 'TICKET_STATUS_CHANGED': return <FiAlertCircle className="w-5 h-5 text-blue-500" />;
-      case 'NEW_COMMENT': return <FiMessageCircle className="w-5 h-5 text-purple-500" />;
+      case 'TICKET_COMMENT': return <FiMessageCircle className="w-5 h-5 text-purple-500" />;
       case 'TICKET_ASSIGNED': return <FiAlertCircle className="w-5 h-5 text-orange-500" />;
       default: return <FiBell className="w-5 h-5 text-gray-500" />;
     }
@@ -76,7 +112,7 @@ const Notifications = () => {
         <div className="flex items-center space-x-3">
           <button onClick={() => setShowUnread(!showUnread)}
             className={`text-sm px-3 py-1 rounded-full ${showUnread ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 border'}`}>
-            {showUnread ? 'Unread Only' : 'All'}
+            {showUnread ? 'Show All' : 'Unread Only'}
           </button>
           <button onClick={handleMarkAllRead}
             className="flex items-center space-x-1 text-sm text-blue-600 hover:text-blue-700">
@@ -95,16 +131,27 @@ const Notifications = () => {
           {notifications.map(notif => (
             <div key={notif.id}
               className={`bg-white rounded-xl shadow-sm p-4 flex items-start space-x-4 ${!notif.read ? 'border-l-4 border-blue-500' : ''}`}>
-              <div className="mt-0.5">{getIcon(notif.type)}</div>
-              <div className="flex-1">
+              <button
+                type="button"
+                onClick={() => handleNotificationClick(notif)}
+                className="mt-0.5"
+                title="Open related item"
+              >
+                {getIcon(notif.type)}
+              </button>
+              <button
+                type="button"
+                onClick={() => handleNotificationClick(notif)}
+                className="flex-1 text-left"
+              >
                 <p className={`text-sm ${!notif.read ? 'font-semibold text-gray-900' : 'text-gray-700'}`}>
                   {notif.title}
                 </p>
                 <p className="text-sm text-gray-500 mt-0.5">{notif.message}</p>
                 <p className="text-xs text-gray-400 mt-1">
-                  {new Date(notif.createdAt).toLocaleString()}
+                  {notif.createdAt ? new Date(notif.createdAt).toLocaleString() : 'Just now'}
                 </p>
-              </div>
+              </button>
               <div className="flex items-center space-x-1">
                 {!notif.read && (
                   <button onClick={() => handleMarkRead(notif.id)}

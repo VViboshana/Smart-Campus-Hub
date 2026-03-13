@@ -4,6 +4,8 @@ import { useAuth } from '../../context/AuthContext';
 import { notificationAPI } from '../../services/api';
 import { FiBell, FiMenu, FiX, FiLogOut, FiHome, FiGrid, FiCalendar, FiAlertCircle, FiUsers, FiChevronDown } from 'react-icons/fi';
 
+const NOTIFICATION_CHANGE_EVENT = 'notifications:changed';
+
 const Navbar = () => {
   const { user, logout, isAdmin, isTechnician } = useAuth();
   const navigate = useNavigate();
@@ -21,10 +23,20 @@ const Navbar = () => {
         // ignore
       }
     };
+
     fetchUnread();
     const interval = setInterval(fetchUnread, 30000);
-    return () => clearInterval(interval);
-  }, []);
+    const handleNotificationChange = () => {
+      fetchUnread();
+    };
+
+    window.addEventListener(NOTIFICATION_CHANGE_EVENT, handleNotificationChange);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener(NOTIFICATION_CHANGE_EVENT, handleNotificationChange);
+    };
+  }, [location.pathname]);
 
   const handleLogout = () => {
     logout();

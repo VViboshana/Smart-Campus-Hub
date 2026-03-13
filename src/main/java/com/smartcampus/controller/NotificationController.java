@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @RestController
 @RequestMapping("/api/notifications")
@@ -24,7 +25,8 @@ public class NotificationController {
     @GetMapping
     public ResponseEntity<ApiResponse<List<Notification>>> getMyNotifications() {
         User currentUser = authService.getCurrentUser();
-        List<Notification> notifications = notificationService.getUserNotifications(currentUser.getId());
+        String userId = Objects.requireNonNull(currentUser.getId());
+        List<Notification> notifications = notificationService.getUserNotifications(userId);
         return ResponseEntity.ok(ApiResponse.success(notifications));
     }
 
@@ -32,7 +34,8 @@ public class NotificationController {
     @GetMapping("/unread")
     public ResponseEntity<ApiResponse<List<Notification>>> getUnreadNotifications() {
         User currentUser = authService.getCurrentUser();
-        List<Notification> notifications = notificationService.getUnreadNotifications(currentUser.getId());
+        String userId = Objects.requireNonNull(currentUser.getId());
+        List<Notification> notifications = notificationService.getUnreadNotifications(userId);
         return ResponseEntity.ok(ApiResponse.success(notifications));
     }
 
@@ -40,14 +43,16 @@ public class NotificationController {
     @GetMapping("/unread/count")
     public ResponseEntity<ApiResponse<Map<String, Long>>> getUnreadCount() {
         User currentUser = authService.getCurrentUser();
-        long count = notificationService.getUnreadCount(currentUser.getId());
+        String userId = Objects.requireNonNull(currentUser.getId());
+        long count = notificationService.getUnreadCount(userId);
         return ResponseEntity.ok(ApiResponse.success(Map.of("count", count)));
     }
 
     // PATCH - Mark notification as read
     @PatchMapping("/{id}/read")
     public ResponseEntity<ApiResponse<Notification>> markAsRead(@PathVariable String id) {
-        Notification notification = notificationService.markAsRead(id);
+        User currentUser = authService.getCurrentUser();
+        Notification notification = notificationService.markAsRead(Objects.requireNonNull(id), Objects.requireNonNull(currentUser));
         return ResponseEntity.ok(ApiResponse.success("Notification marked as read", notification));
     }
 
@@ -55,14 +60,15 @@ public class NotificationController {
     @PatchMapping("/read-all")
     public ResponseEntity<ApiResponse<Void>> markAllAsRead() {
         User currentUser = authService.getCurrentUser();
-        notificationService.markAllAsRead(currentUser.getId());
+        notificationService.markAllAsRead(Objects.requireNonNull(currentUser.getId()));
         return ResponseEntity.ok(ApiResponse.success("All notifications marked as read", null));
     }
 
     // DELETE - Delete notification
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> deleteNotification(@PathVariable String id) {
-        notificationService.deleteNotification(id);
+        User currentUser = authService.getCurrentUser();
+        notificationService.deleteNotification(Objects.requireNonNull(id), Objects.requireNonNull(currentUser));
         return ResponseEntity.ok(ApiResponse.success("Notification deleted", null));
     }
 }
