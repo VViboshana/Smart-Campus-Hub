@@ -44,6 +44,8 @@ export const authAPI = {
   updateMe: (data) => api.put('/auth/me', data),
   changePassword: (data) => api.patch('/auth/me/password', data),
   deleteMe: () => api.delete('/auth/me'),
+  getPreferences: () => api.get('/auth/me/preferences'),
+  updatePreferences: (data) => api.patch('/auth/me/preferences', data),
 };
 
 // Resource APIs

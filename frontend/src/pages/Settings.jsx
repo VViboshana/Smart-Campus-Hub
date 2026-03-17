@@ -22,22 +22,41 @@ const Settings = () => {
     bookingAlerts: true,
     compactMode: false,
   });
+  const [savingPreferences, setSavingPreferences] = useState(false);
 
   useEffect(() => {
     setProfileName(user?.name || '');
   }, [user]);
 
+  // Load preferences from backend on component mount
   useEffect(() => {
-    const raw = localStorage.getItem(SETTINGS_STORAGE_KEY);
-    if (!raw) return;
-    try {
-      const parsed = JSON.parse(raw);
-      setPreferences((prev) => ({ ...prev, ...parsed }));
-    } catch {
-      // ignore invalid local settings payload
-    }
+    const loadPreferences = async () => {
+      try {
+        const res = await authAPI.getPreferences();
+        if (res.data.data) {
+          setPreferences({
+            emailAlerts: res.data.data.emailAlerts ?? true,
+            ticketAlerts: res.data.data.ticketAlerts ?? true,
+            bookingAlerts: res.data.data.bookingAlerts ?? true,
+            compactMode: res.data.data.compactMode ?? false,
+          });
+        }
+      } catch (err) {
+        // Fall back to localStorage if API fails
+        const raw = localStorage.getItem(SETTINGS_STORAGE_KEY);
+        if (!raw) return;
+        try {
+          const parsed = JSON.parse(raw);
+          setPreferences((prev) => ({ ...prev, ...parsed }));
+        } catch {
+          // ignore invalid local settings payload
+        }
+      }
+    };
+    loadPreferences();
   }, []);
 
+  // Persist preferences to localStorage (backup)
   useEffect(() => {
     localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(preferences));
   }, [preferences]);
@@ -94,6 +113,18 @@ const Settings = () => {
 
   const togglePreference = (key) => {
     setPreferences((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const handleSavePreferences = async () => {
+    try {
+      setSavingPreferences(true);
+      await authAPI.updatePreferences(preferences);
+      toast.success('Preferences saved successfully');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to save preferences');
+    } finally {
+      setSavingPreferences(false);
+    }
   };
 
   return (
@@ -189,14 +220,13 @@ const Settings = () => {
           <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
             <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2 mb-4">
               <FiBell className="text-green-600" />
-              Preferences
+              Notification Preferences
             </h2>
             <div className="space-y-3">
               {[
                 { key: 'emailAlerts', label: 'Email alert summaries' },
                 { key: 'ticketAlerts', label: 'Ticket status reminders' },
                 { key: 'bookingAlerts', label: 'Booking updates' },
-                { key: 'compactMode', label: 'Compact dashboard mode' },
               ].map((item) => (
                 <label key={item.key} className="flex items-center justify-between border rounded-lg px-3 py-2">
                   <span className="text-sm text-gray-700">{item.label}</span>
@@ -209,6 +239,26 @@ const Settings = () => {
                 </label>
               ))}
             </div>
+            <div className="mt-4 pt-4 border-t border-gray-200">
+              <h3 className="text-sm font-medium text-gray-700 mb-3">Display Settings</h3>
+              <label className="flex items-center justify-between border rounded-lg px-3 py-2">
+                <span className="text-sm text-gray-700">Compact dashboard mode</span>
+                <input
+                  type="checkbox"
+                  checked={preferences.compactMode}
+                  onChange={() => togglePreference('compactMode')}
+                  className="h-4 w-4"
+                />
+              </label>
+            </div>
+            <button
+              onClick={handleSavePreferences}
+              disabled={savingPreferences}
+              className="mt-4 inline-flex items-center gap-2 rounded-lg bg-green-600 text-white px-4 py-2 hover:bg-green-700 disabled:opacity-60"
+            >
+              <FiSave />
+              {savingPreferences ? 'Saving...' : 'Save Preferences'}
+            </button>
           </section>
         </div>
 

@@ -40,6 +40,19 @@ public class User {
     @Builder.Default
     private Set<Role> roles = new HashSet<>();
 
+    // Notification preferences
+    @Builder.Default
+    private boolean emailAlerts = true;
+
+    @Builder.Default
+    private boolean ticketAlerts = true;
+
+    @Builder.Default
+    private boolean bookingAlerts = true;
+
+    @Builder.Default
+    private boolean compactMode = false;
+
     @CreatedDate
     private LocalDateTime createdAt;
 

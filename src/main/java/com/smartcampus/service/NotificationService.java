@@ -5,22 +5,30 @@ import com.smartcampus.exception.UnauthorizedException;
 import com.smartcampus.model.Notification;
 import com.smartcampus.model.User;
 import com.smartcampus.repository.NotificationRepository;
+import com.smartcampus.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 public class NotificationService {
 
     private final NotificationRepository notificationRepository;
+    private final UserRepository userRepository;
 
     @SuppressWarnings("null")
     public Notification createNotification(@NonNull String userId, String title, String message,
                                             Notification.NotificationType type, String referenceId) {
+        // Check user preferences before creating notification
+        if (!shouldCreateNotification(userId, type)) {
+            return null;
+        }
+
         Notification notification = Notification.builder()
                 .userId(userId)
                 .title(title)
@@ -30,6 +38,26 @@ public class NotificationService {
                 .read(false)
                 .build();
             return Objects.requireNonNull(notificationRepository.save(notification));
+    }
+
+    /**
+     * Checks if a notification should be created based on user preferences
+     */
+    private boolean shouldCreateNotification(@NonNull String userId, @NonNull Notification.NotificationType type) {
+        Optional<User> userOpt = userRepository.findById(userId);
+        if (userOpt.isEmpty()) {
+            return true; // Create notification if user not found (fail-safe)
+        }
+
+        User user = userOpt.get();
+
+        return switch (type) {
+            case BOOKING_APPROVED, BOOKING_REJECTED, BOOKING_CANCELLED ->
+                    user.isBookingAlerts();
+            case TICKET_STATUS_CHANGED, TICKET_ASSIGNED, TICKET_COMMENT ->
+                    user.isTicketAlerts();
+            default -> true; // GENERAL notifications are always created
+        };
     }
 
     public List<Notification> getUserNotifications(@NonNull String userId) {
@@ -73,5 +101,28 @@ public class NotificationService {
         }
 
         return notification;
+    }
+
+    /**
+     * Gets user notification preferences
+     */
+    public User getUserPreferences(@NonNull String userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
+    }
+
+    /**
+     * Updates user notification preferences
+     */
+    public User updateUserPreferences(@NonNull String userId, boolean emailAlerts, boolean ticketAlerts, boolean bookingAlerts, boolean compactMode) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
+
+        user.setEmailAlerts(emailAlerts);
+        user.setTicketAlerts(ticketAlerts);
+        user.setBookingAlerts(bookingAlerts);
+        user.setCompactMode(compactMode);
+
+        return Objects.requireNonNull(userRepository.save(user));
     }
 }
